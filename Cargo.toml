@@ -1,0 +1,16 @@
+[package]
+name = "tauri-plugin-serial"
+version = "0.0.0"
+authors = [ "You" ]
+description = ""
+edition = "2021"
+rust-version = "1.59"
+exclude = ["/examples"]
+
+[dependencies]
+tauri = { version = "1.2.2" }
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+tokio = { version = "1", features = ["full"] }
+serialport = { version = "4.2.0", features = [] }
+ts-rs = "6.2"
