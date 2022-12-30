@@ -7,8 +7,8 @@ use state::SerialConnection;
 
 use crate::command::{connect, dtr, find_available_ports, get_connection, write};
 
-mod command;
-mod state;
+pub mod command;
+pub mod state;
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("serial")
