@@ -1,7 +1,7 @@
 use std::io::{BufRead, BufReader};
 use ts_rs::TS;
 
-use crate::state::{SerialConnection, SerialState};
+use crate::state::SerialState;
 use core::time;
 use std::thread;
 use tauri::State;
@@ -166,11 +166,9 @@ pub async fn find_available_ports() -> Result<Vec<SerialPort>, SerialError> {
 }
 
 #[tauri::command]
-pub async fn get_connection(
-    serial_connection: State<'_, SerialConnection>,
-) -> Result<String, String> {
+pub async fn get_connection(serial_state: State<'_, SerialState>) -> Result<String, String> {
     //! Returns the current connecion for our Tauri state
-    let lock = serial_connection.port.lock().await;
+    let lock = serial_state.connection.lock().await;
     match &*lock {
         Some(port) => Ok(port.name().unwrap()),
         None => Err("No port".to_string()),
@@ -180,18 +178,19 @@ pub async fn get_connection(
 #[tauri::command]
 pub async fn connect(
     port_name: String,
-    serial_connection: State<'_, SerialConnection>,
     serial_state: State<'_, SerialState>,
 ) -> Result<String, String> {
     //! Connect to selected serial port based on port name
     println!("Model::Controller::connect called for {port_name}");
 
-    let port_binding = serial_connection.clone();
-    let mut port_binding = port_binding.port.lock().await;
+    let serial_connection = serial_state.clone();
+    let mut serial_connection_binding = serial_connection.connection.lock().await;
 
     // If we have a valid connection for the port we are trying to connect to,
     // there is nothing to do.
-    if !port_binding.is_none() && port_binding.as_ref().unwrap().name().unwrap() == port_name {
+    if !serial_connection_binding.is_none()
+        && serial_connection_binding.as_ref().unwrap().name().unwrap() == port_name
+    {
         println!("Found existing connection");
         return Ok("Found existing connection".to_string());
     }
@@ -209,10 +208,10 @@ pub async fn connect(
         Ok(active_port) => {
             println!("New port connection opened");
 
-            *serial_state.port_name.lock().await = port_name.to_string();
-            *port_binding = Some(active_port);
+            *serial_state.port.lock().await = port_name.to_string();
+            *serial_connection_binding = Some(active_port);
 
-            if let Err(e) = port_binding
+            if let Err(e) = serial_connection_binding
                 .as_mut()
                 .unwrap()
                 .write_data_terminal_ready(true)
@@ -233,40 +232,32 @@ pub async fn connect(
 #[tauri::command]
 pub async fn write(
     serial_state: State<'_, SerialState>,
-    conn: State<'_, SerialConnection>,
     content: String,
 ) -> Result<String, SerialError> {
     //! Write string content to connected serial port.
-    let conn_clone = conn.clone();
-
-    if let Err(e) = SerialConnection::validate_connection(serial_state, conn_clone).await {
+    if let Err(e) = SerialState::validate_connection(serial_state.clone()).await {
         return Err(SerialError {
             error_type: SerialErrors::Write,
             message: e,
         });
     }
 
-    let port_binding = conn.clone();
-    let mut port_conn = port_binding.port.lock().await;
+    let mut guard = serial_state.connection.lock().await;
 
-    match port_conn.as_mut() {
+    match &mut *guard {
         Some(port) => write_serial(port, content).await,
         None => Err(SerialError {
             error_type: SerialErrors::Write,
-            message: "No connection found".into(),
+            message: "Could not lock Mutex for writing".into(),
         }),
     }
 }
 
 #[tauri::command]
-pub async fn dtr(
-    serial_connection: State<'_, SerialConnection>,
-    level: bool,
-) -> Result<String, SerialError> {
-    let port_binding = serial_connection.clone();
-    let mut port_conn = port_binding.port.lock().await;
+pub async fn dtr(serial_state: State<'_, SerialState>, level: bool) -> Result<String, SerialError> {
+    let mut guard = serial_state.connection.lock().await;
 
-    match port_conn.as_mut() {
+    match &mut *guard {
         Some(port) => send_dtr(port, level).await,
         None => Err(SerialError {
             error_type: SerialErrors::Write,

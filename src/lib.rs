@@ -3,7 +3,7 @@ use tauri::{
     Manager, Runtime,
 };
 
-use state::SerialConnection;
+use state::SerialState;
 
 use crate::command::{connect, dtr, find_available_ports, get_connection, write};
 
@@ -20,8 +20,9 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             dtr
         ])
         .setup(move |app_handle| {
-            app_handle.manage(SerialConnection {
+            app_handle.manage(SerialState {
                 port: Default::default(),
+                connection: Default::default(),
             });
             Ok(())
         })

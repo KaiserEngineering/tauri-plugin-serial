@@ -7,12 +7,8 @@ use crate::command::connect;
 
 #[derive(Default)]
 pub struct SerialState {
-    pub port_name: Mutex<String>,
-}
-
-#[derive(Default)]
-pub struct SerialConnection {
-    pub port: Mutex<Option<Box<dyn serialport::SerialPort>>>,
+    pub port: Mutex<String>,
+    pub connection: Mutex<Option<Box<dyn serialport::SerialPort>>>,
 }
 
 #[derive(Serialize, Clone)]
@@ -27,21 +23,22 @@ pub struct ReadData<'a> {
     pub size: usize,
 }
 
-impl SerialConnection {
+impl SerialState {
     pub async fn validate_connection(
-        session: State<'_, SerialState>,
-        port: State<'_, SerialConnection>,
+        serial_state: State<'_, SerialState>,
     ) -> Result<String, String> {
-        match port.port.try_lock() {
-            Ok(_) => Ok("Old session is good".to_string()),
-            _ => {
-                let session_copy = session.clone();
-                let port_name = session_copy.port_name.lock().await;
+        // Wait for our connection
+        let serial_connection = serial_state.connection.lock().await;
 
-                connect(port_name.to_string(), port.clone(), session).await?;
+        if !serial_connection.is_some() {
+            let state_copy = serial_state.clone();
+            let port_name = state_copy.port.lock().await.clone();
 
-                Ok("New session is good".to_string())
-            }
+            connect(port_name.to_string(), state_copy).await?;
+
+            return Ok("New session is good".to_string());
         }
+
+        Ok("Old session is good".to_string())
     }
 }
