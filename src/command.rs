@@ -37,7 +37,7 @@ pub fn read_serial(
     let mut b_reader = BufReader::with_capacity(1, connection);
 
     if let Err(error) = b_reader.read_until(0x0A, &mut buf) {
-        eprintln!("Reading error: {:?}", error);
+        eprintln!("Reading error: {error:?}");
         return Err(SerialError {
             error_type: SerialErrors::Read,
             message: error.to_string(),
@@ -49,7 +49,7 @@ pub fn read_serial(
     output = output.replace('\n', "");
 
     if output == "ERROR" || output == "nok" {
-        println!("Failed to read/write: {:?}", output);
+        println!("Failed to read/write: {output:?}");
 
         return Err(SerialError {
             error_type: SerialErrors::Read,
@@ -57,7 +57,7 @@ pub fn read_serial(
         });
     }
 
-    println!("Successfully read from serial {:?}", output);
+    println!("Successfully read from serial {output:?}");
     Ok(output)
 }
 
@@ -75,7 +75,7 @@ pub async fn write_serial(
                 })
             } else if write as u32 == content.len() as u32 {
                 let content = content.replace('\n', "");
-                println!("Successfully sent write to serial: {}", content);
+                println!("Successfully sent write to serial: {content}");
 
                 match read_serial(connection) {
                     Err(e) => Err(e),
@@ -151,10 +151,10 @@ pub async fn send_dtr(
     if let Err(e) = conn.write_data_terminal_ready(level) {
         return Err(SerialError {
             error_type: SerialErrors::Boot,
-            message: format!("Ran into issue sending DTR signal {:?}", e),
+            message: format!("Ran into issue sending DTR signal {e:?}"),
         });
     }
-    println!("Wrote DTR signal to level {:?}", level);
+    println!("Wrote DTR signal to level {level:?}");
     Ok("DTR signal successfully sent".into())
 }
 
@@ -184,7 +184,7 @@ pub async fn connect(
     serial_state: State<'_, SerialState>,
 ) -> Result<String, String> {
     //! Connect to selected serial port based on port name
-    println!("Model::Controller::connect called for {}", port_name);
+    println!("Model::Controller::connect called for {port_name}");
 
     let port_binding = serial_connection.clone();
     let mut port_binding = port_binding.port.lock().await;
@@ -202,9 +202,9 @@ pub async fn connect(
 
     match serial_port {
         Err(err) => {
-            println!("Could not open port '{}': {}", port_name, err);
+            println!("Could not open port '{port_name}': {err}");
 
-            Err(format!("Couldn't open serial port: {}", err))
+            Err(format!("Couldn't open serial port: {err}"))
         }
         Ok(active_port) => {
             println!("New port connection opened");
