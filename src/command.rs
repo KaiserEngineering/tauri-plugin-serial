@@ -191,8 +191,18 @@ pub async fn connect(
     if !serial_connection_binding.is_none()
         && serial_connection_binding.as_ref().unwrap().name().unwrap() == port_name
     {
-        println!("Found existing connection");
-        return Ok("Found existing connection".to_string());
+        let mut temp_buffer = [];
+        match serial_connection_binding
+            .as_mut()
+            .unwrap()
+            .read(&mut temp_buffer)
+        {
+            Ok(_) => {
+                println!("Found existing connection");
+                return Ok("Found existing connection".to_string());
+            }
+            Err(_) => {}
+        }
     }
 
     let serial_port = serialport::new(&port_name, 57600)
