@@ -40,6 +40,7 @@ impl Builder {
                 dtr
             ])
             .setup(move |app_handle, api| {
+                println!("Config is {:?}", api.to_owned().config());
                 app_handle.manage(SerialState {
                     port: Default::default(),
                     connection: Default::default(),
