@@ -25,7 +25,7 @@ impl Builder {
         Default::default()
     }
 
-    pub fn option_a(mut self, baud_rate: u32) -> Self {
+    pub fn baud_rate(mut self, baud_rate: u32) -> Self {
         self.baud_rate = baud_rate;
         self
     }
