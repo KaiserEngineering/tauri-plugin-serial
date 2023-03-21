@@ -51,6 +51,8 @@ impl SerialState {
         let state_copy = serial_state.clone();
         let port_name = state_copy.port.lock().await.clone();
 
+        SerialState::usb_is_mounted("Dog");
+
         if !serial_connection.is_some() || !SerialState::usb_is_mounted(&port_name) {
             connect(port_name.to_string(), state_copy).await?;
 
