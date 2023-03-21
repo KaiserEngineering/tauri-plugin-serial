@@ -27,19 +27,14 @@ pub struct ReadData<'a> {
 
 impl SerialState {
     pub fn usb_is_mounted(port_name: &str) -> bool {
-        println!("Serial Info is: {:?}", port_name);
         for device in rusb::devices().unwrap().iter() {
             let device_desc = device.device_descriptor().unwrap();
 
-            println!(
-                "Bus {:03} Device {:03} ID {:04x}:{:04x}",
-                device.bus_number(),
-                device.address(),
-                device_desc.vendor_id(),
-                device_desc.product_id()
-            );
+            if device.address() == port_name {
+                return true;
+            }
         }
-        true
+        false
     }
 
     pub async fn validate_connection(
@@ -50,8 +45,6 @@ impl SerialState {
 
         let state_copy = serial_state.clone();
         let port_name = state_copy.port.lock().await.clone();
-
-        SerialState::usb_is_mounted("Dog");
 
         if !serial_connection.is_some() || !SerialState::usb_is_mounted(&port_name) {
             connect(port_name.to_string(), state_copy).await?;
