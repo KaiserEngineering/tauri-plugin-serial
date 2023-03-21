@@ -14,3 +14,4 @@ serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
 serialport = { version = "4.2.0", features = [] }
 ts-rs = "6.2"
+libusb = "0.3"

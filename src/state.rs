@@ -28,13 +28,12 @@ impl SerialState {
     pub async fn validate_connection(
         serial_state: State<'_, SerialState>,
     ) -> Result<String, String> {
-        println!("Baud Rate: {:?}", serial_state.baud_rate);
         // Wait for our connection
         let serial_connection = serial_state.connection.lock().await;
 
-        if !serial_connection.is_some() {
+        let port_name = state_copy.port.lock().await.clone();
+        if !serial_connection.is_some() || !usb_is_mounted(port_name) {
             let state_copy = serial_state.clone();
-            let port_name = state_copy.port.lock().await.clone();
 
             connect(port_name.to_string(), state_copy).await?;
 
@@ -42,5 +41,13 @@ impl SerialState {
         }
 
         Ok("Old session is good".to_string())
+    }
+
+    fn usb_is_mounted(port_name: &str) -> bool {
+        println!("Serial Info is: {:?}", port_name);
+        let lusb_context = libusb::Context::new().unwrap();
+        let connected_usb_devices = lusb_context.devices().unwrap();
+        println!("USBs mounted are: {:?}", connected_usb_devices);
+        true
     }
 }
