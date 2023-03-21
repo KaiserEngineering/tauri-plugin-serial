@@ -46,8 +46,17 @@ impl SerialState {
 
     fn usb_is_mounted(port_name: &str) -> bool {
         println!("Serial Info is: {:?}", port_name);
-        let devices = rusb::devices().unwrap();
-        println!("USBs mounted are: {:?}", devices);
+        for device in rusb::devices().unwrap().iter() {
+            let device_desc = device.device_descriptor().unwrap();
+
+            println!(
+                "Bus {:03} Device {:03} ID {:04x}:{:04x}",
+                device.bus_number(),
+                device.address(),
+                device_desc.vendor_id(),
+                device_desc.product_id()
+            );
+        }
         true
     }
 }
