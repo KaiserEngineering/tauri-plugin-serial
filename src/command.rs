@@ -195,7 +195,7 @@ pub async fn connect(
         return Ok("Found existing connection".to_string());
     }
 
-    let serial_port = serialport::new(&port_name, 57600)
+    let serial_port = serialport::new(&port_name, serial_state.baud_rate)
         .timeout(time::Duration::from_millis(500))
         .open();
 

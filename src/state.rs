@@ -9,6 +9,7 @@ use crate::command::connect;
 pub struct SerialState {
     pub port: Mutex<String>,
     pub connection: Mutex<Option<Box<dyn serialport::SerialPort>>>,
+    pub baud_rate: u32,
 }
 
 #[derive(Serialize, Clone)]
