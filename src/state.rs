@@ -43,7 +43,6 @@ impl SerialState {
     }
 
     pub async fn validate_connection(
-        self,
         serial_state: State<'_, SerialState>,
     ) -> Result<String, String> {
         // Wait for our connection
