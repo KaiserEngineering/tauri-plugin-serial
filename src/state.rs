@@ -3,6 +3,8 @@ use tokio::sync::Mutex;
 
 use tauri::State;
 
+extern crate libusb;
+
 use crate::command::connect;
 
 #[derive(Default)]
