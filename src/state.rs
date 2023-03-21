@@ -30,7 +30,7 @@ impl SerialState {
         for device in rusb::devices().unwrap().iter() {
             let device_desc = device.device_descriptor().unwrap();
 
-            println!("{:?}", device.address());
+            println!("{:?}", device.device_descriptor());
 
             if device.address().to_string() == port_name.to_string() {
                 return true;
