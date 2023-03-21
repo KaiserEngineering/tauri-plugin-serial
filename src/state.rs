@@ -1,9 +1,8 @@
+use rusb;
 use serde::Serialize;
 use tokio::sync::Mutex;
 
 use tauri::State;
-
-extern crate libusb;
 
 use crate::command::connect;
 
@@ -47,9 +46,8 @@ impl SerialState {
 
     fn usb_is_mounted(port_name: &str) -> bool {
         println!("Serial Info is: {:?}", port_name);
-        let lusb_context = libusb::Context::new().unwrap();
-        let connected_usb_devices = lusb_context.devices().unwrap();
-        println!("USBs mounted are: {:?}", connected_usb_devices);
+        let devices = rusb::devices().unwrap();
+        println!("USBs mounted are: {:?}", devices);
         true
     }
 }
