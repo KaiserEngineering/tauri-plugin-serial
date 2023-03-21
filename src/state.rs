@@ -28,6 +28,7 @@ impl SerialState {
     pub async fn validate_connection(
         serial_state: State<'_, SerialState>,
     ) -> Result<String, String> {
+        println!("Baud Rate: {:?}", serial_state.baud_rate);
         // Wait for our connection
         let serial_connection = serial_state.connection.lock().await;
 
