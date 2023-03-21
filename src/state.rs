@@ -49,10 +49,10 @@ impl SerialState {
         // Wait for our connection
         let serial_connection = serial_state.connection.lock().await;
 
+        let state_copy = serial_state.clone();
         let port_name = state_copy.port.lock().await.clone();
-        if !serial_connection.is_some() || !SerialState::usb_is_mounted(port_name) {
-            let state_copy = serial_state.clone();
 
+        if !serial_connection.is_some() || !SerialState::usb_is_mounted(&port_name) {
             connect(port_name.to_string(), state_copy).await?;
 
             return Ok("New session is good".to_string());
