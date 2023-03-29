@@ -38,7 +38,11 @@ impl SerialState {
     pub async fn validate_connection(
         serial_state: State<'_, SerialState>,
     ) -> Result<String, String> {
-        // Wait for our connection
+        let serial_connection = serial_state.connection.lock().await;
+
+        let state_copy = serial_state.clone();
+        let port_name = state_copy.port.lock().await.clone();
+
         let ports = serialport::available_ports().unwrap();
         let port_names: Vec<_> = ports.iter().map(|p| &p.port_name).cloned().collect();
 
