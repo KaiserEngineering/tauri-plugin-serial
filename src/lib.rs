@@ -5,7 +5,7 @@ use tauri::{
 
 use state::SerialState;
 
-use crate::command::{connect, dtr, find_available_ports, get_connection, write};
+use crate::command::{connect, drop_connection, dtr, find_available_ports, get_connection, write};
 
 pub mod command;
 pub mod state;
@@ -17,9 +17,10 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             get_connection,
             connect,
             write,
-            dtr
+            dtr,
+            drop_connection
         ])
-        .setup(move |app_handle, api| {
+        .setup(move |app_handle, _api| {
             app_handle.manage(SerialState {
                 port: Default::default(),
                 connection: Default::default(),
