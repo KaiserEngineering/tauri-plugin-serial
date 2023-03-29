@@ -29,6 +29,8 @@ impl SerialState {
     pub fn usb_is_mounted(port_name: &str) -> bool {
         for device in rusb::devices().unwrap().iter() {
             println!("{:?}", device.address());
+            println!("{:?}", device.context());
+            println!("{:?}", device.get_parent());
 
             if device.address().to_string() == port_name.to_string() {
                 return true;
