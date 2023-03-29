@@ -19,11 +19,11 @@ pub fn init<R: Runtime>(baud_rate: u32) -> TauriPlugin<R> {
             write,
             dtr
         ])
-        .setup(move |app_handle: &tauri::AppHandle, baud_rate: u32| {
+        .setup(move |app_handle: &tauri::AppHandle| {
             app_handle.manage(SerialState {
                 port: Default::default(),
                 connection: Default::default(),
-                baud_rate,
+                baud_rate: 5700,
             });
             Ok(())
         })
