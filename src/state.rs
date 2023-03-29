@@ -46,7 +46,7 @@ impl SerialState {
         let ports = serialport::available_ports().unwrap();
         let port_names: Vec<_> = ports.iter().map(|p| &p.port_name).cloned().collect();
 
-        if !serial_connection.is_some() || !port_names.contains(port_name) {
+        if !serial_connection.is_some() || !port_names.contains(&port_name) {
             connect(port_name.to_string(), state_copy).await?;
 
             return Ok("New session is good".to_string());
