@@ -28,9 +28,7 @@ pub struct ReadData<'a> {
 impl SerialState {
     pub fn usb_is_mounted(port_name: &str) -> bool {
         for device in rusb::devices().unwrap().iter() {
-            let device_desc = device.device_descriptor().unwrap();
-
-            println!("{:?}", device.device_descriptor());
+            println!("{:?}", device.address());
 
             if device.address().to_string() == port_name.to_string() {
                 return true;
