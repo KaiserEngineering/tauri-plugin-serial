@@ -1,8 +1,8 @@
 [package]
 name = "tauri-plugin-serial"
-version = "0.0.0"
-authors = [ "You" ]
-description = ""
+version = "0.0.1"
+authors = [ "craig@kaiserengineering.io" ]
+description = "Serial plugin for the KE ShiftLight configuration tool."
 edition = "2021"
 rust-version = "1.59"
 exclude = ["/examples"]
