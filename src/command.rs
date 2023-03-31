@@ -7,7 +7,6 @@ use crate::state::SerialState;
 use core::time;
 use std::thread;
 use tauri::State;
-use tokio::time::timeout;
 
 use serde::Serialize;
 
@@ -112,19 +111,15 @@ pub async fn write_serial(
 }
 
 #[tauri::command]
-pub async fn get_connection(serial_state: State<'_, SerialState>) -> Result<String, String> {
+pub async fn get_connection(serial_state: State<'_, SerialState>) -> Result<String, SerialError> {
     //! Returns the current connecion name for our Tauri state
-    match timeout(
-        time::Duration::from_millis(10),
-        serial_state.connection.lock(),
-    )
-    .await
-    {
-        Ok(lock) => match &*lock {
-            Some(port) => Ok(port.name().unwrap()),
-            None => Err("Timed-out getting connection, dropping".to_string()),
-        },
-        Err(_) => Err("Timeout: no response in 10 milliseconds.".to_string()),
+    let mut guard = serial_state.connection.lock().await;
+    match &mut *guard {
+        Some(port) => Ok(port.name().unwrap()),
+        None => Err(SerialError {
+            error_type: SerialErrors::Connection,
+            message: "No connection found".into(),
+        }),
     }
 }
 
@@ -133,13 +128,16 @@ pub async fn drop_connection<R: Runtime>(
     serial_state: State<'_, SerialState>,
     window: Window<R>,
 ) -> Result<String, SerialError> {
-    serial_state.connection.lock().await.take();
+    let guard = serial_state.connection.lock().await;
+    drop(guard);
+
     if let Err(e) = window.emit("DISCONNECTED", ()) {
         return Err(SerialError {
             error_type: SerialErrors::Connection,
             message: format!("Failed to emit DISCONNECTED event: {e:?}"),
         });
     }
+    println!("Dropped serial connection");
     Ok("Dropped connection".to_string())
 }
 
@@ -148,7 +146,7 @@ pub async fn connect<R: Runtime>(
     port_name: String,
     serial_state: State<'_, SerialState>,
     window: Window<R>,
-) -> Result<String, String> {
+) -> Result<String, SerialError> {
     //! Connect to selected serial port based on port name
     println!("Model::Controller::connect called for {port_name}");
     let serial_port = serialport::new(&port_name, serial_state.baud_rate)
@@ -160,7 +158,10 @@ pub async fn connect<R: Runtime>(
     match serial_port {
         Err(err) => {
             println!("Could not open port '{port_name}': {err}");
-            Err(format!("Couldn't open serial port: {err}"))
+            Err(SerialError {
+                error_type: SerialErrors::Connection,
+                message: format!("Couldn't open serial port: {:?}", err),
+            })
         }
         Ok(active_connection) => {
             println!("New port connection opened");
@@ -168,16 +169,22 @@ pub async fn connect<R: Runtime>(
             *serial_state.port.lock().await = port_name.to_string();
             *guard = Some(active_connection);
 
-            if let Err(e) = guard.as_mut().unwrap().write_data_terminal_ready(true) {
-                return Err(e.to_string());
+            if let Err(err) = guard.as_mut().unwrap().write_data_terminal_ready(true) {
+                return Err(SerialError {
+                    error_type: SerialErrors::Connection,
+                    message: format!("Couldn't write DTR: {:?}", err),
+                });
             }
             println!("DTR signal written");
 
             // Sleep while the device reboots
             thread::sleep(time::Duration::from_millis(3500));
 
-            if let Err(e) = window.emit("CONNECTED", ()) {
-                return Err(format!("Failed to emit CONNECTED event: {e:?}"));
+            if let Err(err) = window.emit("CONNECTED", ()) {
+                return Err(SerialError {
+                    error_type: SerialErrors::Connection,
+                    message: format!("Failed to emit CONNECTED event {:?}", err),
+                });
             }
 
             Ok("New connection established".to_string())
