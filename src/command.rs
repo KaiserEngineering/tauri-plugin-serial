@@ -122,10 +122,7 @@ pub async fn get_connection(serial_state: State<'_, SerialState>) -> Result<Stri
     {
         Ok(lock) => match &*lock {
             Some(port) => Ok(port.name().unwrap()),
-            None => {
-                // std::mem::drop(serial_state.connection);
-                return Err("Timed-out getting connection, dropping".to_string());
-            }
+            None => Err("Timed-out getting connection, dropping".to_string()),
         },
         Err(_) => Err("Timeout: no response in 10 milliseconds.".to_string()),
     }
@@ -137,7 +134,7 @@ pub async fn drop_connection<R: Runtime>(
     window: Window<R>,
 ) -> Result<String, SerialError> {
     serial_state.connection.lock().await.take();
-    if let Err(e) = window.emit("DISCONNECTED", {}) {
+    if let Err(e) = window.emit("DISCONNECTED", ()) {
         return Err(SerialError {
             error_type: SerialErrors::Connection,
             message: format!("Failed to emit DISCONNECTED event: {e:?}"),
@@ -179,7 +176,7 @@ pub async fn connect<R: Runtime>(
             // Sleep while the device reboots
             thread::sleep(time::Duration::from_millis(3500));
 
-            if let Err(e) = window.emit("CONNECTED", {}) {
+            if let Err(e) = window.emit("CONNECTED", ()) {
                 return Err(format!("Failed to emit CONNECTED event: {e:?}"));
             }
 
@@ -202,13 +199,13 @@ pub async fn write(
         });
     }
 
-    return match &mut *guard {
+    match &mut *guard {
         Some(port) => write_serial(port, content).await,
         None => Err(SerialError {
             error_type: SerialErrors::Write,
             message: "Could not lock Mutex for writing".into(),
         }),
-    };
+    }
 }
 
 pub async fn send_dtr(
