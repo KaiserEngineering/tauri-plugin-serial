@@ -1,11 +1,14 @@
+use crate::command::SerialPort;
 use serde::Serialize;
+use std::sync::Arc;
 use tokio::sync::Mutex;
 
 #[derive(Default)]
 pub struct SerialState {
-    pub port: Mutex<String>,
-    pub connection: Mutex<Option<Box<dyn serialport::SerialPort>>>,
+    pub port: Arc<Mutex<String>>,
+    pub connection: Arc<Mutex<Option<Box<dyn serialport::SerialPort>>>>,
     pub baud_rate: u32,
+    pub ports: Arc<Mutex<Vec<SerialPort>>>,
 }
 
 #[derive(Serialize, Clone)]
