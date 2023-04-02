@@ -122,15 +122,13 @@ pub async fn get_connection(serial_state: State<'_, SerialState>) -> Result<Stri
         }),
     }
 }
-
 #[tauri::command]
 pub async fn drop_connection<R: Runtime>(
     serial_state: State<'_, SerialState>,
     window: Window<R>,
 ) -> Result<String, SerialError> {
-    let guard = serial_state.connection.lock().await;
-    drop(guard);
-
+    let mut guard = serial_state.connection.lock().await;
+    drop(guard.take());
     if let Err(e) = window.emit("DISCONNECTED", ()) {
         return Err(SerialError {
             error_type: SerialErrors::Connection,

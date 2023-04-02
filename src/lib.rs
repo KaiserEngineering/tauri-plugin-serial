@@ -34,7 +34,7 @@ fn watch_devices<R: Runtime>(serial_state: State<'_, SerialState>, window: Windo
 
         match devices {
             Ok(devices) => {
-                let serial_ports = massage_devices_list(devices);
+                let serial_ports = massage_devices_list(&devices);
                 // TODO: Do a real check
                 if serial_ports.len() != known_devices.len() {
                     *known_devices = serial_ports;
@@ -48,6 +48,7 @@ fn watch_devices<R: Runtime>(serial_state: State<'_, SerialState>, window: Windo
                         eprintln!("Failed to emit DEVICE_LIST_UPDATED event: {e:?}");
                     }
                 }
+                std::mem::drop(devices);
             }
             Err(err) => eprint!("Error getting available_ports: {err:?}"),
         };
@@ -56,7 +57,7 @@ fn watch_devices<R: Runtime>(serial_state: State<'_, SerialState>, window: Windo
     });
 }
 
-fn massage_devices_list(devices: Vec<SerialPortInfo>) -> Vec<SerialPort> {
+fn massage_devices_list(devices: &Vec<SerialPortInfo>) -> Vec<SerialPort> {
     devices
         .iter()
         .map(|p| {
@@ -100,7 +101,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
                     port: Default::default(),
                     connection: Default::default(),
                     baud_rate,
-                    ports: Arc::new(Mutex::new(massage_devices_list(ports_found))),
+                    ports: Arc::new(Mutex::new(massage_devices_list(&ports_found))),
                 },
                 Err(err) => {
                     eprint!("Could not get initial available_ports {err:?}");
