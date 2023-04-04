@@ -28,8 +28,9 @@ struct Payload {
 #[tauri::command]
 fn watch_devices<R: Runtime>(serial_state: State<'_, SerialState>, window: Window<R>) {
     let state = Arc::clone(&serial_state.ports);
-    std::thread::spawn(async move || loop {
-        let mut known_devices = state.lock().await;
+
+    std::thread::spawn(move || loop {
+        let mut known_devices = state.blocking_lock();
         let devices = serialport::available_ports();
 
         match devices {
