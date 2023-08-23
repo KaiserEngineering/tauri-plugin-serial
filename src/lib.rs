@@ -61,14 +61,32 @@ fn watch_devices<R: Runtime>(serial_state: State<'_, SerialState>, window: Windo
 fn massage_devices_list(devices: &Vec<SerialPortInfo>) -> Vec<SerialPort> {
     devices
         .iter()
-        .map(|p| {
-            // Right now we only grab Port name
-            SerialPort {
-                port_name: p.port_name.clone(),
-                port_info: match &p.port_type {
-                    serialport::SerialPortType::UsbPort(info) => info.product.clone().unwrap(),
-                    _ => "".to_string(),
-                },
+        .filter_map(|p: &SerialPortInfo| {
+            // On Mac we do not want to show cu connections
+            if p.port_name.contains("cu.") {
+                return None;
+            }
+
+            // Right now we only look at USB connections!
+            let usb_port_info = match &p.port_type {
+                serialport::SerialPortType::UsbPort(info) => Ok(info),
+                serialport::SerialPortType::BluetoothPort => Err("Connection type unsupported"),
+                _ => Err("Connection type unsupported"),
+            };
+
+            match usb_port_info {
+                Ok(info) =>
+                // Right now we only grab Port name
+                {
+                    Some(SerialPort {
+                        port_name: p.port_name.clone(),
+                        product_name: info
+                            .product
+                            .clone()
+                            .unwrap_or("Product name not found".to_string()),
+                    })
+                }
+                _ => None,
             }
         })
         .collect()

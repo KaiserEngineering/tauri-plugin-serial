@@ -23,7 +23,7 @@ pub enum SerialErrors {
 #[ts(export)]
 pub struct SerialPort {
     pub port_name: String,
-    pub port_info: String,
+    pub product_name: String,
 }
 
 #[derive(Debug, Serialize, TS)]
