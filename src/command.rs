@@ -1,7 +1,7 @@
 use std::io::{BufRead, BufReader};
 use ts_rs::TS;
 
-use tauri::{Runtime, Window};
+use tauri::{Manager, Runtime, Window};
 
 use crate::state::SerialState;
 use core::time;
